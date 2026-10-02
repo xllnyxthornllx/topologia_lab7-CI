@@ -39,6 +39,16 @@ interface GigabitEthernet1/0/3
  no shutdown
  exit
 
+! --- Puerto 4: PC monitoreo (VLAN 30, ve cámaras directo) ---
+interface GigabitEthernet1/0/4
+ description PC_MONITOREO_CCTV
+ switchport mode access
+ switchport access vlan 30
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+ exit
+
 ! --- Puerto 24: servidor DHCP (VLAN 99) ---
 interface GigabitEthernet1/0/24
  description SERVIDOR_DHCP_ens33

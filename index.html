@@ -51,7 +51,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin-top:10px}
 <p>VLAN 30 CCTV · VLAN 99 Gestión · NVR + 2 cámaras · Marca cada cable cuando lo conectes</p>
 <p style="margin-top:8px;font-size:13px">🧭 <a href="#puertos" style="color:#fff">Puertos</a> · <a href="#tbl" style="color:#fff">Checklist</a> · <a href="#cfg9300" style="color:#fff">Config 9300L</a> · <a href="#cfg9200" style="color:#fff">Config 9200L</a></p>
 <div class="bar"><div id="pb"></div></div>
-<p id="pc" style="margin-top:6px;font-size:13px">0 de 8 conexiones listas (0%)</p>
+<p id="pc" style="margin-top:6px;font-size:13px">0 de 9 conexiones listas (0%)</p>
 <p style="margin-top:4px;font-size:13px"><span id="syncPill"><span class="badge pend">modo local</span></span></p>
 </header>
 
@@ -87,40 +87,46 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin-top:10px}
 <rect x="410" y="198" width="320" height="72" rx="10" fill="#3f3f46" stroke="#a1a1aa" class="node" data-n="switch"/>
 <text x="570" y="220" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">C9200L ACCESO (Gi1/0/1 trunk)</text>
 <text x="570" y="238" fill="#d4d4d8" text-anchor="middle" font-size="11">VLAN30 CCTV · VLAN99 GESTION</text>
-<text x="570" y="254" fill="#d4d4d8" text-anchor="middle" font-size="10">2:CAM1 3:NVR 24:DHCP 10:PC</text>
-<rect x="20" y="296" width="520" height="128" rx="10" fill="rgba(34,197,94,.07)" stroke="#22c55e"/>
-<text x="280" y="314" fill="#22c55e" text-anchor="middle" font-size="12" font-weight="700">VLAN 30 CCTV <tspan data-ip="net30">172.18.30.0/24</tspan></text>
-<rect x="40" y="324" width="230" height="80" rx="8" fill="#14532d" stroke="#22c55e" class="node" data-n="nvr"/>
-<text x="155" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">NVR Hikvision</text>
-<text x="155" y="362" fill="#bbf7d0" text-anchor="middle" font-size="11" data-ip="nvr">172.18.30.10</text>
-<text x="155" y="380" fill="#bbf7d0" text-anchor="middle" font-size="10">Gi1/0/3 · HDD 1TB</text>
-<rect x="290" y="324" width="230" height="80" rx="8" fill="#14532d" stroke="#22c55e" class="node" data-n="cam1"/>
-<text x="405" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">Cámara 1 (switch)</text>
-<text x="405" y="362" fill="#bbf7d0" text-anchor="middle" font-size="11" data-ip="cam1">172.18.30.20</text>
-<text x="405" y="380" fill="#bbf7d0" text-anchor="middle" font-size="10">Gi1/0/2 · PoE/inyector</text>
-<rect x="590" y="296" width="530" height="128" rx="10" fill="rgba(56,189,248,.07)" stroke="#38bdf8"/>
-<text x="855" y="314" fill="#38bdf8" text-anchor="middle" font-size="12" font-weight="700">VLAN 99 GESTIÓN <tspan data-ip="net99">172.18.99.0/24</tspan></text>
-<rect x="610" y="324" width="240" height="80" rx="8" fill="#0c4a6e" stroke="#38bdf8" class="node" data-n="dhcp"/>
-<text x="730" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">DHCP ✅ listo</text>
-<text x="730" y="362" fill="#bae6fd" text-anchor="middle" font-size="11" data-ip="dhcp">172.18.99.10</text>
-<text x="730" y="380" fill="#bae6fd" text-anchor="middle" font-size="10">Gi1/0/10 · dnsmasq</text>
-<rect x="860" y="324" width="240" height="80" rx="8" fill="#0c4a6e" stroke="#38bdf8" class="node" data-n="pc"/>
-<text x="980" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">PC Admin (DHCP)</text>
-<text x="980" y="362" fill="#bae6fd" text-anchor="middle" font-size="11">iVMS-4200+HiTools</text>
-<text x="980" y="380" fill="#bae6fd" text-anchor="middle" font-size="10">Gi1/0/11 · .100-.180</text>
+<text x="570" y="254" fill="#d4d4d8" text-anchor="middle" font-size="10">2:CAM1 3:NVR 4:PCMON 24:DHCP 10:PC</text>
+<rect x="20" y="296" width="640" height="128" rx="10" fill="rgba(34,197,94,.07)" stroke="#22c55e"/>
+<text x="340" y="314" fill="#22c55e" text-anchor="middle" font-size="12" font-weight="700">VLAN 30 CCTV <tspan data-ip="net30">172.18.30.0/24</tspan></text>
+<rect x="40" y="324" width="190" height="80" rx="8" fill="#14532d" stroke="#22c55e" class="node" data-n="nvr"/>
+<text x="135" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">🗄️ NVR Hikvision</text>
+<text x="135" y="362" fill="#bbf7d0" text-anchor="middle" font-size="11" data-ip="nvr">172.18.30.10</text>
+<text x="135" y="380" fill="#bbf7d0" text-anchor="middle" font-size="10">Gi1/0/3 · HDD 1TB</text>
+<rect x="245" y="324" width="190" height="80" rx="8" fill="#14532d" stroke="#22c55e" class="node" data-n="cam1"/>
+<text x="340" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">🎥 Cámara 1 (switch)</text>
+<text x="340" y="362" fill="#bbf7d0" text-anchor="middle" font-size="11" data-ip="cam1">172.18.30.20</text>
+<text x="340" y="380" fill="#bbf7d0" text-anchor="middle" font-size="10">Gi1/0/2 · PoE/inyector</text>
+<rect x="450" y="324" width="190" height="80" rx="8" fill="#14532d" stroke="#22c55e" class="node" data-n="pcmon"/>
+<text x="545" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">🖥️ PC Monitoreo</text>
+<text x="545" y="362" fill="#bbf7d0" text-anchor="middle" font-size="11">DHCP CCTV</text>
+<text x="545" y="380" fill="#bbf7d0" text-anchor="middle" font-size="10">Gi1/0/4 · directo V30</text>
+<rect x="680" y="296" width="440" height="128" rx="10" fill="rgba(56,189,248,.07)" stroke="#38bdf8"/>
+<text x="900" y="314" fill="#38bdf8" text-anchor="middle" font-size="12" font-weight="700">VLAN 99 GESTIÓN <tspan data-ip="net99">172.18.99.0/24</tspan></text>
+<rect x="700" y="324" width="200" height="80" rx="8" fill="#0c4a6e" stroke="#38bdf8" class="node" data-n="dhcp"/>
+<text x="800" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">⚙️ DHCP ✅ listo</text>
+<text x="800" y="362" fill="#bae6fd" text-anchor="middle" font-size="11" data-ip="dhcp">172.18.99.10</text>
+<text x="800" y="380" fill="#bae6fd" text-anchor="middle" font-size="10">Gi1/0/24 · dnsmasq</text>
+<rect x="910" y="324" width="200" height="80" rx="8" fill="#0c4a6e" stroke="#38bdf8" class="node" data-n="pc"/>
+<text x="1010" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">🖥️ PC Admin (DHCP)</text>
+<text x="1010" y="362" fill="#bae6fd" text-anchor="middle" font-size="11">iVMS-4200+HiTools</text>
+<text x="1010" y="380" fill="#bae6fd" text-anchor="middle" font-size="10">Gi1/0/10 · .100-.180</text>
 <rect x="150" y="198" width="210" height="72" rx="10" fill="#713f12" stroke="#f59e0b" class="node" data-n="cam2"/>
 <text x="255" y="220" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">Cámara 2 PoE NVR</text>
 <text x="255" y="238" fill="#fde68a" text-anchor="middle" font-size="11">IP interna NVR</text>
 <text x="255" y="254" fill="#fde68a" text-anchor="middle" font-size="10">puerto PoE directo</text>
 <line id="lk0" x1="570" y1="60" x2="570" y2="86" class="lk" data-c="7"/>
 <line id="lk1" x1="570" y1="190" x2="570" y2="198" class="lk" data-c="0"/>
-<line id="lk2" x1="490" y1="234" x2="405" y2="324" class="lk" data-c="2"/>
-<line id="lk3" x1="510" y1="234" x2="155" y2="324" class="lk" data-c="3"/>
+<line id="lk2" x1="490" y1="234" x2="340" y2="324" class="lk" data-c="2"/>
+<line id="lk3" x1="510" y1="234" x2="135" y2="324" class="lk" data-c="3"/>
 <line id="lk4" x1="255" y1="270" x2="200" y2="324" class="lk" data-c="4"/>
-<line id="lk5" x1="650" y1="234" x2="730" y2="324" class="lk" data-c="5"/>
-<line id="lk6" x1="670" y1="234" x2="980" y2="324" class="lk" data-c="6"/>
+<line id="lk5" x1="650" y1="234" x2="800" y2="324" class="lk" data-c="5"/>
+<line id="lk6" x1="670" y1="234" x2="1010" y2="324" class="lk" data-c="6"/>
+<line id="lk8" x1="560" y1="234" x2="545" y2="324" class="lk" data-c="8"/>
 </svg>
 <div id="info">👆 Clic en equipo o línea para ver qué cable usar, qué puerto y cómo probar.</div>
+<p style="font-size:12px;color:var(--mut);margin-top:8px">🟩 VLAN 30 CCTV &nbsp; 🟦 VLAN 99 Gestión &nbsp; 🟧 Red PoE interna NVR &nbsp; 🟪 WAN proveedor &nbsp; — línea <b style="color:var(--ok)">verde gruesa</b> = cable ya marcado ✔</p>
 </div>
 
 <div class="card" id="puertos">
@@ -138,6 +144,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin-top:10px}
 <tr><td><b>Gi1/0/1</b></td><td>C9300L Gi1/0/1 <small>CABLE-00</small></td><td>trunk 30,99</td></tr>
 <tr><td><b>Gi1/0/2</b></td><td>Cámara 1 <small>CABLE-01</small></td><td>access 30</td></tr>
 <tr><td><b>Gi1/0/3</b></td><td>NVR LAN <small>CABLE-02</small></td><td>access 30</td></tr>
+<tr><td><b>Gi1/0/4</b></td><td>PC Monitoreo <small>CABLE-07</small></td><td>access 30</td></tr>
 <tr><td><b>Gi1/0/24</b></td><td>DHCP ens33 <small>CABLE-04</small></td><td>access 99</td></tr>
 <tr><td><b>Gi1/0/10</b></td><td>PC Admin <small>CABLE-05</small></td><td>access 99</td></tr>
 </table></div>
@@ -161,6 +168,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin-top:10px}
 <tr><td>Cámara 1</td><td data-ip="cam1">172.18.30.20</td><td data-ip="r30">172.18.30.1</td></tr>
 <tr><td>DHCP ✅</td><td data-ip="dhcp">172.18.99.10</td><td data-ip="r99">172.18.99.1</td></tr>
 <tr><td>PC Admin</td><td>DHCP .100-.180</td><td data-ip="r99">172.18.99.1</td></tr>
+<tr><td>🖥️ PC Monitoreo</td><td>DHCP CCTV .100-.180</td><td data-ip="r30">172.18.30.1</td></tr>
 <tr><td>Cámara 2</td><td>interna NVR</td><td>—</td></tr>
 </table></div>
 <div class="card"><h2>🧪 Pruebas día del lab</h2>
@@ -206,7 +214,8 @@ var CONN=[
 {id:4,cable:"CABLE-03 NARANJA",color:"#fb923c",de:"NVR puerto PoE (ej. PoE-1)",a:"Cámara 2",puertos:"PoE-1 NVR ↔ eth Cam2 (Plug&Play)",test:"Camera Management → Online · Live View ch2",det:"Red interna del NVR, IP la pone el NVR. Anota nº de puerto PoE usado. Virtual Host solo si piden web directa."},
 {id:5,cable:"CABLE-04 AZUL",color:"#38bdf8",de:"C9200L Gi1/0/24 (access V99)",a:"Servidor DHCP (ens33)",puertos:"Gi1/0/24 access vlan 99 ↔ ens33 (172.XX.99.10)",test:"./verificar-lab.sh · ss :67 · leases",det:"Tu VM nyxthorn al puerto 24 del 9200L. Al pinchar corre sudo ./aplicar-lab.sh. Etiqueta AZUL-DHCP."},
 {id:6,cable:"CABLE-05 GRIS",color:"#a1a1aa",de:"C9200L Gi1/0/10 (access V99)",a:"PC Admin",puertos:"Gi1/0/10 access vlan 99 ↔ eth PC (DHCP)",test:"ipconfig /renew → 172.XX.99.x · ping GW+NVR",det:"PC de gestión con iVMS-4200 + HiTools al puerto 10. Etiqueta GRIS-PC."},
-{id:7,cable:"CABLE-06 ROJO",color:"#ef4444",de:"Proveedor Internet",a:"C9300L Gi1/0/24 (WAN)",puertos:"cable proveedor ↔ Gi1/0/24 routed (no switchport, ip dhcp)",test:"show ip int brief → Gi1/0/24 up/up con IP · ping 8.8.8.8",det:"Puerto 24 del 9300L al proveedor. OJO: el 9300L NO hace NAT; vale si el proveedor entrega IP privada con salida."}];
+{id:7,cable:"CABLE-06 ROJO",color:"#ef4444",de:"Proveedor Internet",a:"C9300L Gi1/0/24 (WAN)",puertos:"cable proveedor ↔ Gi1/0/24 routed (no switchport, ip dhcp)",test:"show ip int brief → Gi1/0/24 up/up con IP · ping 8.8.8.8",det:"Puerto 24 del 9300L al proveedor. OJO: el 9300L NO hace NAT; vale si el proveedor entrega IP privada con salida."},
+{id:8,cable:"CABLE-07 BLANCO",color:"#e2e8f0",de:"C9200L Gi1/0/4 (access V30)",a:"PC Monitoreo",puertos:"Gi1/0/4 access vlan 30 ↔ eth PC (DHCP CCTV)",test:"ipconfig /renew → 172.XX.30.x · ping directo a NVR y Cam1",det:"Misma VLAN que cámaras: ve el video directo sin pasar por el router. Etiqueta BLANCO-MON."}];
 /* ===== SYNC GRUPAL: Firebase Realtime Database (tiempo real) =====
    checks/check-XX -> {by, at}. Sin conexión/errores -> localStorage. */
 const firebaseConfig = {
@@ -263,7 +272,7 @@ tr.innerHTML='<td><input type="checkbox" class="chk" id="'+cid(c.id)+'" data-id=
 +'<td><small>'+c.test+'</small></td>'
 +'<td>'+(on?'<span class="badge done">conectado ✔</span>'+(whoBy(c.id)?'<br><small>por '+whoBy(c.id)+'</small>':''):'<span class="badge pend">falta</span>')+'</td>';
 t.appendChild(tr);
-var LKMAP={0:'lk1',1:null,2:'lk2',3:'lk3',4:'lk4',5:'lk5',6:'lk6',7:'lk0'};
+var LKMAP={0:'lk1',1:null,2:'lk2',3:'lk3',4:'lk4',5:'lk5',6:'lk6',7:'lk0',8:'lk8'};
 var lk=LKMAP[c.id]?document.getElementById(LKMAP[c.id]):null;
 if(lk)lk.classList.toggle('on',on);
 });
@@ -272,7 +281,7 @@ document.getElementById('pb').style.width=p+'%';
 document.getElementById('pc').textContent=n+' de '+CONN.length+' conexiones listas ('+p+'%)';
 document.querySelectorAll('.chk').forEach(function(ch){ch.onchange=function(){setCheck(ch.dataset.id,ch.checked);};});
 }
-var INFO={isp:"<b>INTERNET/ISP</b> — WAN del C9300L con NAT y default route. No exigible para Live View local.",router:"<b>C9300L CORE L3</b> — Vlan30 <span>172.XX.30.1</span> + helper hacia DHCP; Vlan99 <span>172.XX.99.1</span>; <b>ip routing</b> obligatorio. SSH: ssh netadmin@172.XX.99.1. Ver: show ip route.",switch:"<b>C9200L ACCESO</b> — VLAN 30/99. Access: 2=CAM1, 3=NVR, 24=DHCP, 10=PC (+portfast/bpduguard). Trunk Gi1/0/1 → 9300L Gi1/0/1. Mgmt 172.XX.99.2 GW .1. SSH: ssh netadmin@172.XX.99.2.",nvr:"<b>NVR</b> — LAN <span data-ip='nvr'>172.18.30.10</span>, admin/XPTecsup2, HDD 1TB Normal, Overwrite ON.",cam1:"<b>CÁMARA 1</b> — <span data-ip='cam1'>172.18.30.20</span> por switch PoE. Alta en NVR por IP protocolo Hikvision.",dhcp:"<b>DHCP ✅</b> — <span data-ip='dhcp'>172.18.99.10</span> ens33, dnsmasq pools .100-.180, reservas NVR/Cam1.",pc:"<b>PC ADMIN</b> — DHCP VLAN99, iVMS-4200 + HiTools. ipconfig /renew para probar.",cam2:"<b>CÁMARA 2</b> — directo a PoE del NVR (red interna). Se ve como canal del NVR."};
+var INFO={isp:"<b>INTERNET/ISP</b> — WAN del C9300L con NAT y default route. No exigible para Live View local.",router:"<b>C9300L CORE L3</b> — Vlan30 <span>172.XX.30.1</span> + helper hacia DHCP; Vlan99 <span>172.XX.99.1</span>; <b>ip routing</b> obligatorio. SSH: ssh netadmin@172.XX.99.1. Ver: show ip route.",switch:"<b>C9200L ACCESO</b> — VLAN 30/99. Access: 2=CAM1, 3=NVR, 24=DHCP, 10=PC (+portfast/bpduguard). Trunk Gi1/0/1 → 9300L Gi1/0/1. Mgmt 172.XX.99.2 GW .1. SSH: ssh netadmin@172.XX.99.2.",nvr:"<b>NVR</b> — LAN <span data-ip='nvr'>172.18.30.10</span>, admin/XPTecsup2, HDD 1TB Normal, Overwrite ON.",cam1:"<b>CÁMARA 1</b> — <span data-ip='cam1'>172.18.30.20</span> por switch PoE. Alta en NVR por IP protocolo Hikvision.",dhcp:"<b>DHCP ✅</b> — <span data-ip='dhcp'>172.18.99.10</span> ens33, dnsmasq pools .100-.180, reservas NVR/Cam1.",pc:"<b>PC ADMIN</b> — DHCP VLAN99, iVMS-4200 + HiTools. ipconfig /renew para probar.",pcmon:"<b>PC MONITOREO</b> — DHCP en VLAN 30 (Gi1/0/4). Misma VLAN que cámaras: acceso directo sin routing. Ideal para puesto de vigilancia.",cam2:"<b>CÁMARA 2</b> — directo a PoE del NVR (red interna). Se ve como canal del NVR."};
 document.querySelectorAll('svg .node').forEach(function(el){el.addEventListener('click',function(){
 document.querySelectorAll('svg .node').forEach(function(x){x.classList.remove('sel')});el.classList.add('sel');
 document.getElementById('info').innerHTML=INFO[el.dataset.n]||'';});});
@@ -315,6 +324,7 @@ var c9200='! C9200L ACCESO - pegar TODO de una vez en consola\n'
 +'vlan 99\n name GESTION\n exit\n'
 +'interface GigabitEthernet1/0/2\n description CAMARA_1_HIKVISION\n switchport mode access\n switchport access vlan 30\n spanning-tree portfast\n spanning-tree bpduguard enable\n no shutdown\n exit\n'
 +'interface GigabitEthernet1/0/3\n description NVR_HIKVISION_LAN\n switchport mode access\n switchport access vlan 30\n spanning-tree portfast\n spanning-tree bpduguard enable\n no shutdown\n exit\n'
++'interface GigabitEthernet1/0/4\n description PC_MONITOREO_CCTV\n switchport mode access\n switchport access vlan 30\n spanning-tree portfast\n spanning-tree bpduguard enable\n no shutdown\n exit\n'
 +'interface GigabitEthernet1/0/24\n description SERVIDOR_DHCP_ens33\n switchport mode access\n switchport access vlan 99\n spanning-tree portfast\n spanning-tree bpduguard enable\n no shutdown\n exit\n'
 +'interface GigabitEthernet1/0/10\n description PC_ADMIN_iVMS\n switchport mode access\n switchport access vlan 99\n spanning-tree portfast\n spanning-tree bpduguard enable\n no shutdown\n exit\n'
 +'interface GigabitEthernet1/0/1\n description UPLINK_C9300L\n switchport mode trunk\n switchport trunk allowed vlan 30,99\n no shutdown\n exit\n'

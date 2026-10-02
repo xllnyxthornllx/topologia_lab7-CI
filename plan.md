@@ -47,6 +47,7 @@
 - [ ] Configurar puertos access:
   - Gi1/0/2 → CAMARA_1 (VLAN 30)
   - Gi1/0/3 → NVR_LAN (VLAN 30)
+  - Gi1/0/4 → PC_MONITOREO (VLAN 30, ve cámaras directo)
   - Gi1/0/24 → SERVIDOR_DHCP (VLAN 99)
   - Gi1/0/10 → PC_ADMIN (VLAN 99)
 - [ ] Configurar puerto trunk uplink (Gi1/0/1) → allowed vlan 30,99 (puerto 1 con puerto 1 del 9300L)
