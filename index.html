@@ -49,7 +49,7 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin-top:10px}
 <header>
 <h1>Lab 07 — Topología interactiva + checklist de cableado</h1>
 <p>VLAN 30 CCTV · VLAN 99 Gestión · NVR + 2 cámaras · Marca cada cable cuando lo conectes</p>
-<p style="margin-top:8px;font-size:13px">🧭 <a href="#puertos" style="color:#fff">Puertos</a> · <a href="#tbl" style="color:#fff">Checklist</a> · <a href="#cfg9300" style="color:#fff">Config 9300L</a> · <a href="#cfg9200" style="color:#fff">Config 9200L</a></p>
+<p style="margin-top:8px;font-size:13px">🧭 <a href="#puertos" style="color:#fff">Puertos</a> · <a href="#accesos" style="color:#fff">Accesos</a> · <a href="#tbl" style="color:#fff">Checklist</a> · <a href="#cfg9300" style="color:#fff">Config 9300L</a> · <a href="#cfg9200" style="color:#fff">Config 9200L</a></p>
 <div class="bar"><div id="pb"></div></div>
 <p id="pc" style="margin-top:6px;font-size:13px">0 de 9 conexiones listas (0%)</p>
 <p style="margin-top:4px;font-size:13px"><span id="syncPill"><span class="badge pend">modo local</span></span></p>
@@ -151,6 +151,26 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin-top:10px}
 </div>
 </div>
 
+<div class="card" id="accesos">
+<h2>🎯 Matriz de accesos — quién ve qué y cómo</h2>
+<div class="grid">
+<div><table>
+<tr><th>🖥️ PC Monitoreo (VLAN 30)</th><th>Cómo entra</th></tr>
+<tr><td><b>Cámara 1</b> <small data-ip="cam1">172.18.30.20</small></td><td>Web directa <code>http://<span data-ip="cam1">172.18.30.20</span></code> — mismo segmento, sin router ✅</td></tr>
+<tr><td><b>NVR</b> <small data-ip="nvr">172.18.30.10</small></td><td>Web/iVMS directo, mismo segmento ✅</td></tr>
+<tr><td><b>Cámara 2</b> <small>PoE interna</small></td><td>Solo como canal del NVR (esa red no se rutea) ⚠️</td></tr>
+</table></div>
+<div><table>
+<tr><th>🖥️ PC Admin (VLAN 99)</th><th>Cómo entra</th></tr>
+<tr><td><b>NVR</b> <small data-ip="nvr">172.18.30.10</small></td><td>iVMS-4200 + web vía routing inter-VLAN ✅ ve <b>ambos canales</b></td></tr>
+<tr><td><b>Cámara 1</b> <small data-ip="cam1">172.18.30.20</small></td><td>Web directa vía routing + HiTools ✅</td></tr>
+<tr><td><b>Cámara 2</b> <small>PoE interna</small></td><td>Solo vía NVR en iVMS (Virtual Host si piden web) ⚠️</td></tr>
+<tr><td><b>Switches + DHCP</b></td><td>SSH gestión en VLAN 99 ✅</td></tr>
+</table></div>
+</div>
+<p style="font-size:12px;color:var(--mut);margin-top:8px">Regla simple: <b>monitoreo = vista directa en sitio</b> (Cam1), <b>admin = gestión total</b> (NVR + Cam1 + red).</p>
+</div>
+
 <div class="card">
 <h2>🔌 Checklist de cableado — marca ✔ cuando conectes y pruebes</h2>
 <table id="tbl">
@@ -213,9 +233,9 @@ var CONN=[
 {id:3,cable:"CABLE-02 VERDE",color:"#22c55e",de:"C9200L Gi1/0/3 (access V30)",a:"NVR puerto LAN",puertos:"Gi1/0/3 access vlan 30 ↔ LAN NVR (no PoE)",test:"ping 172.XX.30.10 · HiTools ve NVR",det:"OJO: al puerto LAN, NO a un puerto PoE del NVR. IP 172.XX.30.10."},
 {id:4,cable:"CABLE-03 NARANJA",color:"#fb923c",de:"NVR puerto PoE (ej. PoE-1)",a:"Cámara 2",puertos:"PoE-1 NVR ↔ eth Cam2 (Plug&Play)",test:"Camera Management → Online · Live View ch2",det:"Red interna del NVR, IP la pone el NVR. Anota nº de puerto PoE usado. Virtual Host solo si piden web directa."},
 {id:5,cable:"CABLE-04 AZUL",color:"#38bdf8",de:"C9200L Gi1/0/24 (access V99)",a:"Servidor DHCP (ens33)",puertos:"Gi1/0/24 access vlan 99 ↔ ens33 (172.XX.99.10)",test:"./verificar-lab.sh · ss :67 · leases",det:"Tu VM nyxthorn al puerto 24 del 9200L. Al pinchar corre sudo ./aplicar-lab.sh. Etiqueta AZUL-DHCP."},
-{id:6,cable:"CABLE-05 GRIS",color:"#a1a1aa",de:"C9200L Gi1/0/10 (access V99)",a:"PC Admin",puertos:"Gi1/0/10 access vlan 99 ↔ eth PC (DHCP)",test:"ipconfig /renew → 172.XX.99.x · ping GW+NVR",det:"PC de gestión con iVMS-4200 + HiTools al puerto 10. Etiqueta GRIS-PC."},
+{id:6,cable:"CABLE-05 GRIS",color:"#a1a1aa",de:"C9200L Gi1/0/10 (access V99)",a:"PC Admin",puertos:"Gi1/0/10 access vlan 99 ↔ eth PC (DHCP)",test:"ipconfig /renew → 172.XX.99.x · ping GW+NVR",det:"PC de gestión (VLAN 99): ve todo vía routing — NVR en iVMS (ambos canales) + Cam1 web/HiTools + SSH. Etiqueta GRIS-PC."},
 {id:7,cable:"CABLE-06 ROJO",color:"#ef4444",de:"Proveedor Internet",a:"C9300L Gi1/0/24 (WAN)",puertos:"cable proveedor ↔ Gi1/0/24 routed (no switchport, ip dhcp)",test:"show ip int brief → Gi1/0/24 up/up con IP · ping 8.8.8.8",det:"Puerto 24 del 9300L al proveedor. OJO: el 9300L NO hace NAT; vale si el proveedor entrega IP privada con salida."},
-{id:8,cable:"CABLE-07 BLANCO",color:"#e2e8f0",de:"C9200L Gi1/0/4 (access V30)",a:"PC Monitoreo",puertos:"Gi1/0/4 access vlan 30 ↔ eth PC (DHCP CCTV)",test:"ipconfig /renew → 172.XX.30.x · ping directo a NVR y Cam1",det:"Misma VLAN que cámaras: ve el video directo sin pasar por el router. Etiqueta BLANCO-MON."}];
+{id:8,cable:"CABLE-07 BLANCO",color:"#e2e8f0",de:"C9200L Gi1/0/4 (access V30)",a:"PC Monitoreo",puertos:"Gi1/0/4 access vlan 30 ↔ eth PC (DHCP CCTV)",test:"ipconfig /renew → 172.XX.30.x · ping directo a NVR y Cam1",det:"Puesto de vigilancia conectado a Cámara 1: abre su web directo (mismo segmento, sin router). También llega al NVR. Etiqueta BLANCO-MON."}];
 /* ===== SYNC GRUPAL: Firebase Realtime Database (tiempo real) =====
    checks/check-XX -> {by, at}. Sin conexión/errores -> localStorage. */
 const firebaseConfig = {
@@ -281,7 +301,7 @@ document.getElementById('pb').style.width=p+'%';
 document.getElementById('pc').textContent=n+' de '+CONN.length+' conexiones listas ('+p+'%)';
 document.querySelectorAll('.chk').forEach(function(ch){ch.onchange=function(){setCheck(ch.dataset.id,ch.checked);};});
 }
-var INFO={isp:"<b>INTERNET/ISP</b> — WAN del C9300L con NAT y default route. No exigible para Live View local.",router:"<b>C9300L CORE L3</b> — Vlan30 <span>172.XX.30.1</span> + helper hacia DHCP; Vlan99 <span>172.XX.99.1</span>; <b>ip routing</b> obligatorio. SSH: ssh netadmin@172.XX.99.1. Ver: show ip route.",switch:"<b>C9200L ACCESO</b> — VLAN 30/99. Access: 2=CAM1, 3=NVR, 24=DHCP, 10=PC (+portfast/bpduguard). Trunk Gi1/0/1 → 9300L Gi1/0/1. Mgmt 172.XX.99.2 GW .1. SSH: ssh netadmin@172.XX.99.2.",nvr:"<b>NVR</b> — LAN <span data-ip='nvr'>172.18.30.10</span>, admin/XPTecsup2, HDD 1TB Normal, Overwrite ON.",cam1:"<b>CÁMARA 1</b> — <span data-ip='cam1'>172.18.30.20</span> por switch PoE. Alta en NVR por IP protocolo Hikvision.",dhcp:"<b>DHCP ✅</b> — <span data-ip='dhcp'>172.18.99.10</span> ens33, dnsmasq pools .100-.180, reservas NVR/Cam1.",pc:"<b>PC ADMIN</b> — DHCP VLAN99, iVMS-4200 + HiTools. ipconfig /renew para probar.",pcmon:"<b>PC MONITOREO</b> — DHCP en VLAN 30 (Gi1/0/4). Misma VLAN que cámaras: acceso directo sin routing. Ideal para puesto de vigilancia.",cam2:"<b>CÁMARA 2</b> — directo a PoE del NVR (red interna). Se ve como canal del NVR."};
+var INFO={isp:"<b>INTERNET/ISP</b> — WAN del C9300L con NAT y default route. No exigible para Live View local.",router:"<b>C9300L CORE L3</b> — Vlan30 <span>172.XX.30.1</span> + helper hacia DHCP; Vlan99 <span>172.XX.99.1</span>; <b>ip routing</b> obligatorio. SSH: ssh netadmin@172.XX.99.1. Ver: show ip route.",switch:"<b>C9200L ACCESO</b> — VLAN 30/99. Access: 2=CAM1, 3=NVR, 24=DHCP, 10=PC (+portfast/bpduguard). Trunk Gi1/0/1 → 9300L Gi1/0/1. Mgmt 172.XX.99.2 GW .1. SSH: ssh netadmin@172.XX.99.2.",nvr:"<b>NVR</b> — LAN <span data-ip='nvr'>172.18.30.10</span>, admin/XPTecsup2, HDD 1TB Normal, Overwrite ON.",cam1:"<b>CÁMARA 1</b> — <span data-ip='cam1'>172.18.30.20</span> por switch PoE. Alta en NVR por IP protocolo Hikvision.",dhcp:"<b>DHCP ✅</b> — <span data-ip='dhcp'>172.18.99.10</span> ens33, dnsmasq pools .100-.180, reservas NVR/Cam1.",pc:"<b>PC ADMIN</b> — VLAN 99. Ve TODO: NVR (iVMS ambos canales) + Cam1 (web/HiTools) vía routing + SSH a red.",pcmon:"<b>PC MONITOREO</b> — VLAN 30 (Gi1/0/4). Conectado a Cámara 1: web directa mismo segmento + NVR directo.",cam2:"<b>CÁMARA 2</b> — directo a PoE del NVR (red interna). Se ve como canal del NVR."};
 document.querySelectorAll('svg .node').forEach(function(el){el.addEventListener('click',function(){
 document.querySelectorAll('svg .node').forEach(function(x){x.classList.remove('sel')});el.classList.add('sel');
 document.getElementById('info').innerHTML=INFO[el.dataset.n]||'';});});
