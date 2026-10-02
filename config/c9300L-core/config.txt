@@ -1,0 +1,103 @@
+! ============================================================
+! C9300L - CORE L3 / ROUTER INTER-VLAN - Lab 07
+! Equipo: Catalyst 9300L (hace de router: SVI .30 y .99)
+! XX por defecto = 18. Si tu lab usa otro XX, reemplaza 172.18. ->
+! Adapta el puerto uplink al real (ej. Te1/0/1 o Gi1/0/48)
+! ============================================================
+en
+configure terminal
+
+hostname C9300L-LAB07
+! Necesario para generar llave SSH:
+ip domain name lab07.local
+! Evita demoras por DNS en el lab:
+no ip domain lookup
+
+! --- VLANs ---
+vlan 30
+ name CCTV
+ exit
+vlan 99
+ name GESTION
+ exit
+
+! --- Routing L3 ---
+ip routing
+
+! --- SVI Gateway CCTV + DHCP relay hacia tu VM ---
+interface Vlan30
+ description GW_CCTV
+ ip address 172.18.30.1 255.255.255.0
+ ip helper-address 172.18.99.10
+ no shutdown
+ exit
+
+! --- SVI Gateway Gestion ---
+interface Vlan99
+ description GW_GESTION
+ ip address 172.18.99.1 255.255.255.0
+ no shutdown
+ exit
+
+! --- Puerto 1: uplink hacia C9200L (troncal, solo 30 y 99) ---
+interface GigabitEthernet1/0/1
+ description UPLINK_SW9200L
+ switchport mode trunk
+ switchport trunk allowed vlan 30,99
+ no shutdown
+ exit
+
+! --- Puerto 24: WAN hacia proveedor de Internet ---
+! OJO: el 9300L NO hace NAT. Vale si el proveedor entrega IP
+! privada con salida (típico de lab). La ruta default llega por DHCP.
+interface GigabitEthernet1/0/24
+ description WAN_PROVEEDOR
+ no switchport
+ ip address dhcp
+ no shutdown
+ exit
+
+! ============================================================
+! SSH - acceso remoto (para que administres + yo te ayude)
+! Usuario: netadmin / Clave: CAMBIA ESTA LINEA antes de pegar
+! ============================================================
+username netadmin privilege 15 secret Lab07*Admin
+enable secret Lab07*Admin
+! Solo SSH v2, nada de telnet:
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+line vty 0 15
+ transport input ssh
+ login local
+ exec-timeout 15 0
+ exit
+! Consola tambien con login local:
+line console 0
+ login local
+ exec-timeout 15 0
+ exit
+service password-encryption
+
+! --- Guardar y salir de config ---
+end
+! --- OJO: este comando va FUERA de configure (modo enable) ---
+! Si pide reemplazar llave existente, responde yes:
+crypto key generate rsa modulus 2048
+write memory
+
+! ===== VERIFICACION (modo EXEC, no configure) =====
+! show vlan brief
+! show ip interface brief | include Vlan
+! show ip interface brief | include 1/0/24   (WAN: debe tener IP del proveedor)
+! show ip route connected
+! show ip helper-address
+! show ssh
+! show users
+! Desde PC Admin (VLAN 99): ssh netadmin@172.18.30.1  (o .99.1, ambas son el mismo equipo)
+! Si cambiaste XX: ssh netadmin@172.XX.99.1
+
+! ===== NOTA DHCP RELAY =====
+! El helper va SOLO en Vlan30 (donde estan NVR/Cam1).
+! Vlan99 no lo necesita (el servidor DHCP vive ahi).
+! Sin 'ip routing', las VLAN no se hablan aunque tengan SVI.

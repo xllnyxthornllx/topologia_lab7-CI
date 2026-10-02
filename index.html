@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 07 - Topología interactiva</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--line:#334155;--txt:#e2e8f0;--mut:#94a3b8;--ok:#22c55e;--pend:#f59e0b;--acc:#38bdf8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',Arial,sans-serif;padding:18px}
+.wrap{max-width:1240px;margin:auto}
+header{background:linear-gradient(135deg,#0ea5e9,#6366f1);border-radius:14px;padding:22px;margin-bottom:14px}
+header h1{font-size:22px}
+header p{color:#e0e7ff;margin-top:6px;font-size:14px}
+.bar{height:12px;background:rgba(0,0,0,.35);border-radius:8px;overflow:hidden;margin-top:10px}
+.bar div{height:100%;background:linear-gradient(90deg,#22c55e,#38bdf8);width:0%;transition:width .3s}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{font-size:15px;margin-bottom:10px;color:var(--acc);text-transform:uppercase;letter-spacing:.5px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:950px){.grid{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
+th{background:#0b1220;color:var(--acc)}
+td small{color:var(--mut)}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.done{background:rgba(34,197,94,.15);color:var(--ok);border:1px solid var(--ok)}
+.pend{background:rgba(245,158,11,.15);color:var(--pend);border:1px solid var(--pend)}
+.topo{background:#0b1220;border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto;margin-bottom:14px}
+.ctrl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.ctrl input{background:#0b1220;border:1px solid var(--acc);color:#fff;border-radius:8px;padding:7px 10px;width:80px;text-align:center;font-size:16px;font-weight:700}
+.ctrl button{background:var(--acc);border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;margin-right:6px}
+.ctrl button.ghost{background:transparent;border:1px solid var(--acc);color:var(--acc)}
+code{background:#0b1220;padding:2px 6px;border-radius:5px;color:#7dd3fc;font-size:12px}
+pre{background:#0b1220;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12px;overflow-x:auto;color:#c4b5fd}
+svg .node{cursor:pointer}
+svg .node.sel rect{stroke:#fff;stroke-width:3}
+svg .lk{stroke:#64748b;stroke-width:2.5;cursor:pointer}
+svg .lk.on{stroke:#22c55e;stroke-width:4}
+svg text{font-family:'Segoe UI',Arial;pointer-events:none}
+.chk{width:18px;height:18px;cursor:pointer}
+.tag{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:2px 8px;margin-right:4px}
+#info{background:#0b1220;border:1px dashed var(--acc);border-radius:10px;padding:12px;font-size:13px;min-height:56px}
+footer{color:var(--mut);font-size:12px;text-align:center;margin-top:10px}
+@media print{body{background:#fff;color:#000}.card,.topo{break-inside:avoid}header{background:#eee;color:#000}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>Lab 07 — Topología interactiva + checklist de cableado</h1>
+<p>VLAN 30 CCTV · VLAN 99 Gestión · NVR + 2 cámaras · Marca cada cable cuando lo conectes</p>
+<p style="margin-top:8px;font-size:13px">🧭 <a href="#puertos" style="color:#fff">Puertos</a> · <a href="#tbl" style="color:#fff">Checklist</a> · <a href="#cfg9300" style="color:#fff">Config 9300L</a> · <a href="#cfg9200" style="color:#fff">Config 9200L</a></p>
+<div class="bar"><div id="pb"></div></div>
+<p id="pc" style="margin-top:6px;font-size:13px">0 de 8 conexiones listas (0%)</p>
+<p style="margin-top:4px;font-size:13px"><span id="syncPill"><span class="badge pend">modo local</span></span></p>
+</header>
+
+<div class="card">
+<h2>⚙️ Octeto XX (cambia en el lab)</h2>
+<div class="ctrl">
+<label>172.<b>XX</b>.30.x / 172.<b>XX</b>.99.x →</label>
+<input id="oct" type="number" value="18" min="0" max="255">
+<button onclick="aplicar()">Aplicar</button>
+<button class="ghost" onclick="resetChecks()">Reset checks</button>
+<button class="ghost" onclick="window.print()">Imprimir</button>
+<span id="msg" style="color:var(--ok);font-size:13px"></span>
+</div>
+<div class="ctrl">
+<label>Tu nombre (el grupo verá quién marcó cada ✔):</label>
+<input id="myName" type="text" placeholder="ej. Alvarez" style="width:140px;font-size:14px">
+<button onclick="saveName()">OK</button>
+<span style="font-size:13px">Eres: <b id="nameLbl">—</b></span>
+</div>
+</div>
+
+<div class="topo">
+<h2 style="color:var(--acc);font-size:14px;margin-bottom:8px">🗺️ Haz clic en un equipo o cable para ver detalle</h2>
+<svg id="svg" width="1140" height="440" viewBox="0 0 1140 440">
+<rect x="490" y="8" width="160" height="52" rx="10" fill="#312e81" stroke="#818cf8" class="node" data-n="isp"/>
+<text x="570" y="30" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">INTERNET / ISP</text>
+<text x="570" y="48" fill="#c7d2fe" text-anchor="middle" font-size="11">→ 9300L Gi1/0/24 (WAN)</text>
+<rect x="450" y="86" width="240" height="104" rx="10" fill="#1e3a5f" stroke="#38bdf8" class="node" data-n="router"/>
+<text x="570" y="108" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">C9300L CORE L3 (router)</text>
+<text x="570" y="126" fill="#7dd3fc" text-anchor="middle" font-size="11" data-ip="r30">Vlan30 → 172.18.30.1</text>
+<text x="570" y="142" fill="#7dd3fc" text-anchor="middle" font-size="11" data-ip="r99">Vlan99 → 172.18.99.1</text>
+<text x="570" y="158" fill="#fbbf24" text-anchor="middle" font-size="10">helper → <tspan data-ip="dhcp">172.18.99.10</tspan></text>
+<text x="570" y="174" fill="#c7d2fe" text-anchor="middle" font-size="10">Gi1/0/24 WAN · Gi1/0/1 trunk→9200L</text>
+<rect x="410" y="198" width="320" height="72" rx="10" fill="#3f3f46" stroke="#a1a1aa" class="node" data-n="switch"/>
+<text x="570" y="220" fill="#fff" text-anchor="middle" font-size="13" font-weight="700">C9200L ACCESO (Gi1/0/1 trunk)</text>
+<text x="570" y="238" fill="#d4d4d8" text-anchor="middle" font-size="11">VLAN30 CCTV · VLAN99 GESTION</text>
+<text x="570" y="254" fill="#d4d4d8" text-anchor="middle" font-size="10">2:CAM1 3:NVR 24:DHCP 10:PC</text>
+<rect x="20" y="296" width="520" height="128" rx="10" fill="rgba(34,197,94,.07)" stroke="#22c55e"/>
+<text x="280" y="314" fill="#22c55e" text-anchor="middle" font-size="12" font-weight="700">VLAN 30 CCTV <tspan data-ip="net30">172.18.30.0/24</tspan></text>
+<rect x="40" y="324" width="230" height="80" rx="8" fill="#14532d" stroke="#22c55e" class="node" data-n="nvr"/>
+<text x="155" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">NVR Hikvision</text>
+<text x="155" y="362" fill="#bbf7d0" text-anchor="middle" font-size="11" data-ip="nvr">172.18.30.10</text>
+<text x="155" y="380" fill="#bbf7d0" text-anchor="middle" font-size="10">Gi1/0/3 · HDD 1TB</text>
+<rect x="290" y="324" width="230" height="80" rx="8" fill="#14532d" stroke="#22c55e" class="node" data-n="cam1"/>
+<text x="405" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">Cámara 1 (switch)</text>
+<text x="405" y="362" fill="#bbf7d0" text-anchor="middle" font-size="11" data-ip="cam1">172.18.30.20</text>
+<text x="405" y="380" fill="#bbf7d0" text-anchor="middle" font-size="10">Gi1/0/2 · PoE/inyector</text>
+<rect x="590" y="296" width="530" height="128" rx="10" fill="rgba(56,189,248,.07)" stroke="#38bdf8"/>
+<text x="855" y="314" fill="#38bdf8" text-anchor="middle" font-size="12" font-weight="700">VLAN 99 GESTIÓN <tspan data-ip="net99">172.18.99.0/24</tspan></text>
+<rect x="610" y="324" width="240" height="80" rx="8" fill="#0c4a6e" stroke="#38bdf8" class="node" data-n="dhcp"/>
+<text x="730" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">DHCP ✅ listo</text>
+<text x="730" y="362" fill="#bae6fd" text-anchor="middle" font-size="11" data-ip="dhcp">172.18.99.10</text>
+<text x="730" y="380" fill="#bae6fd" text-anchor="middle" font-size="10">Gi1/0/10 · dnsmasq</text>
+<rect x="860" y="324" width="240" height="80" rx="8" fill="#0c4a6e" stroke="#38bdf8" class="node" data-n="pc"/>
+<text x="980" y="344" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">PC Admin (DHCP)</text>
+<text x="980" y="362" fill="#bae6fd" text-anchor="middle" font-size="11">iVMS-4200+HiTools</text>
+<text x="980" y="380" fill="#bae6fd" text-anchor="middle" font-size="10">Gi1/0/11 · .100-.180</text>
+<rect x="150" y="198" width="210" height="72" rx="10" fill="#713f12" stroke="#f59e0b" class="node" data-n="cam2"/>
+<text x="255" y="220" fill="#fff" text-anchor="middle" font-size="12" font-weight="700">Cámara 2 PoE NVR</text>
+<text x="255" y="238" fill="#fde68a" text-anchor="middle" font-size="11">IP interna NVR</text>
+<text x="255" y="254" fill="#fde68a" text-anchor="middle" font-size="10">puerto PoE directo</text>
+<line id="lk0" x1="570" y1="60" x2="570" y2="86" class="lk" data-c="7"/>
+<line id="lk1" x1="570" y1="190" x2="570" y2="198" class="lk" data-c="0"/>
+<line id="lk2" x1="490" y1="234" x2="405" y2="324" class="lk" data-c="2"/>
+<line id="lk3" x1="510" y1="234" x2="155" y2="324" class="lk" data-c="3"/>
+<line id="lk4" x1="255" y1="270" x2="200" y2="324" class="lk" data-c="4"/>
+<line id="lk5" x1="650" y1="234" x2="730" y2="324" class="lk" data-c="5"/>
+<line id="lk6" x1="670" y1="234" x2="980" y2="324" class="lk" data-c="6"/>
+</svg>
+<div id="info">👆 Clic en equipo o línea para ver qué cable usar, qué puerto y cómo probar.</div>
+</div>
+
+<div class="card" id="puertos">
+<h2>📌 Mapa de puertos — pégalo en cada equipo con cinta</h2>
+<div class="grid">
+<div><table>
+<tr><th>C9300L CORE L3</th><th>Va a</th><th>Modo</th></tr>
+<tr><td><b>Gi1/0/1</b></td><td>C9200L Gi1/0/1 <small>CABLE-00</small></td><td>trunk 30,99</td></tr>
+<tr><td><b>Gi1/0/24</b></td><td>Proveedor <small>CABLE-06 ROJO</small></td><td>routed DHCP (WAN)</td></tr>
+<tr><td><b>Vlan30</b></td><td>GW CCTV <span data-ip="r30">172.18.30.1</span></td><td>SVI + helper</td></tr>
+<tr><td><b>Vlan99</b></td><td>GW Gestión <span data-ip="r99">172.18.99.1</span></td><td>SVI</td></tr>
+</table></div>
+<div><table>
+<tr><th>C9200L ACCESO</th><th>Va a</th><th>Modo</th></tr>
+<tr><td><b>Gi1/0/1</b></td><td>C9300L Gi1/0/1 <small>CABLE-00</small></td><td>trunk 30,99</td></tr>
+<tr><td><b>Gi1/0/2</b></td><td>Cámara 1 <small>CABLE-01</small></td><td>access 30</td></tr>
+<tr><td><b>Gi1/0/3</b></td><td>NVR LAN <small>CABLE-02</small></td><td>access 30</td></tr>
+<tr><td><b>Gi1/0/24</b></td><td>DHCP ens33 <small>CABLE-04</small></td><td>access 99</td></tr>
+<tr><td><b>Gi1/0/10</b></td><td>PC Admin <small>CABLE-05</small></td><td>access 99</td></tr>
+</table></div>
+</div>
+</div>
+
+<div class="card">
+<h2>🔌 Checklist de cableado — marca ✔ cuando conectes y pruebes</h2>
+<table id="tbl">
+<tr><th>✔</th><th>Cable</th><th>De → A</th><th>Puertos exactos</th><th>Qué verificar</th><th>Estado</th></tr>
+</table>
+</div>
+
+<div class="grid">
+<div class="card"><h2>📊 Direccionamiento</h2><table>
+<tr><th>Equipo</th><th>IP</th><th>GW</th></tr>
+<tr><td>C9300L Vlan30</td><td data-ip="r30">172.18.30.1</td><td>— (él es GW, ip routing)</td></tr>
+<tr><td>C9300L Vlan99</td><td data-ip="r99">172.18.99.1</td><td>—</td></tr>
+<tr><td>C9200L mgmt</td><td>172.18.99.2</td><td data-ip="r99">172.18.99.1</td></tr>
+<tr><td>NVR LAN</td><td data-ip="nvr">172.18.30.10</td><td data-ip="r30">172.18.30.1</td></tr>
+<tr><td>Cámara 1</td><td data-ip="cam1">172.18.30.20</td><td data-ip="r30">172.18.30.1</td></tr>
+<tr><td>DHCP ✅</td><td data-ip="dhcp">172.18.99.10</td><td data-ip="r99">172.18.99.1</td></tr>
+<tr><td>PC Admin</td><td>DHCP .100-.180</td><td data-ip="r99">172.18.99.1</td></tr>
+<tr><td>Cámara 2</td><td>interna NVR</td><td>—</td></tr>
+</table></div>
+<div class="card"><h2>🧪 Pruebas día del lab</h2>
+<pre>PC Admin: ipconfig /renew
+ping <span data-ip="r99">172.18.99.1</span>   (GW)
+ping <span data-ip="nvr">172.18.30.10</span>  (NVR inter-VLAN)
+HiTools → descubrir Cam1
+iVMS → NVR Online 2 canales
+Playback → clip por movimiento</pre>
+<p style="font-size:12px;color:var(--mut)">Evidencias en <code>evidencias/&lt;fase&gt;/</code>.</p></div>
+</div>
+<div class="card">
+<h2>🔧 Configs completas — copiar y pegar en consola</h2>
+<p style="font-size:13px;margin-bottom:10px"><b>Un solo pegado por equipo:</b> copia → pega en consola (empieza en <code>en</code> y termina en <code>write memory</code>) → si pide reemplazar la llave responde <code>yes</code>. ⚠️ Primero ajusta XX y tu clave aquí abajo.</p>
+<div class="ctrl">
+<label>XX:</label><input id="oct2" type="number" value="18" min="0" max="255" style="width:70px">
+<label>Clave SSH/enable:</label><input id="pwd2" type="text" value="Lab07*Admin" style="width:150px;font-size:14px">
+<button onclick="aplicar()">Generar configs</button>
+<span id="msg2" style="color:var(--ok);font-size:13px"></span>
+</div>
+<div class="grid">
+<div>
+<h2 style="font-size:13px">C9300L core L3 <button onclick="copiar('cfg9300',this)" style="background:var(--ok);border:none;border-radius:6px;padding:4px 12px;font-weight:700;cursor:pointer">📋 Copiar</button></h2>
+<pre id="cfg9300" style="max-height:420px;overflow-y:auto"></pre>
+</div>
+<div>
+<h2 style="font-size:13px">C9200L acceso <button onclick="copiar('cfg9200',this)" style="background:var(--ok);border:none;border-radius:6px;padding:4px 12px;font-weight:700;cursor:pointer">📋 Copiar</button></h2>
+<pre id="cfg9200" style="max-height:420px;overflow-y:auto"></pre>
+</div>
+</div>
+<p style="font-size:12px;color:var(--mut);margin-top:8px">Si tu uplink no es <code>Te1/0/1</code> / <code>Gi1/0/24</code>, cambia esas 2 líneas en tu consola antes de pegar. Verificación después: <code>show vlan brief | show interfaces trunk | show ip int brief | show ssh</code>. SSH: <code>ssh netadmin@172.XX.99.1</code> (9300L) y <code>.99.2</code> (9200L).</p>
+</div>
+<footer>Checks se guardan en este navegador · XX editable · imprime esta página para llevarla al lab</footer>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+var CONN=[
+{id:0,cable:"CABLE-00 UPLINK",color:"#818cf8",de:"C9300L Gi1/0/1 (trunk)",a:"C9200L Gi1/0/1 (trunk 30,99)",puertos:"Gi1/0/1 ↔ Gi1/0/1 · allowed vlan 30,99 (puerto 1 con 1)",test:"show interfaces trunk en ambos · ping entre gateways",det:"Cable troncal entre Catalysts (puerto 1 a puerto 1). Sin esto no hay inter-VLAN ni DHCP relay. Ambos extremos mode trunk."},
+{id:1,cable:"— (lógico)",color:"#38bdf8",de:"C9300L SVIs",a:"Vlan30 .1 y Vlan99 .1 + ip routing",puertos:"Vlan30 ↔ VLAN30 · Vlan99 ↔ VLAN99 · helper .10 en Vlan30",test:"ping 172.XX.30.1 y 172.XX.99.1 · show ip route",det:"En el 9300L NO son subinterfaces: son SVI + ip routing + ip helper-address 172.XX.99.10 en Vlan30."},
+{id:2,cable:"CABLE-01 AMARILLO",color:"#facc15",de:"C9200L Gi1/0/2 (access V30)",a:"Cámara 1",puertos:"Gi1/0/2 access vlan 30 + portfast ↔ eth Cam1",test:"LED PoE · HiTools ve <IP_CAM1> · ping",det:"Etiqueta AMARILLO-CAM1 en ambos extremos. Si switch no es PoE usa inyector. IP 172.XX.30.20."},
+{id:3,cable:"CABLE-02 VERDE",color:"#22c55e",de:"C9200L Gi1/0/3 (access V30)",a:"NVR puerto LAN",puertos:"Gi1/0/3 access vlan 30 ↔ LAN NVR (no PoE)",test:"ping 172.XX.30.10 · HiTools ve NVR",det:"OJO: al puerto LAN, NO a un puerto PoE del NVR. IP 172.XX.30.10."},
+{id:4,cable:"CABLE-03 NARANJA",color:"#fb923c",de:"NVR puerto PoE (ej. PoE-1)",a:"Cámara 2",puertos:"PoE-1 NVR ↔ eth Cam2 (Plug&Play)",test:"Camera Management → Online · Live View ch2",det:"Red interna del NVR, IP la pone el NVR. Anota nº de puerto PoE usado. Virtual Host solo si piden web directa."},
+{id:5,cable:"CABLE-04 AZUL",color:"#38bdf8",de:"C9200L Gi1/0/24 (access V99)",a:"Servidor DHCP (ens33)",puertos:"Gi1/0/24 access vlan 99 ↔ ens33 (172.XX.99.10)",test:"./verificar-lab.sh · ss :67 · leases",det:"Tu VM nyxthorn al puerto 24 del 9200L. Al pinchar corre sudo ./aplicar-lab.sh. Etiqueta AZUL-DHCP."},
+{id:6,cable:"CABLE-05 GRIS",color:"#a1a1aa",de:"C9200L Gi1/0/10 (access V99)",a:"PC Admin",puertos:"Gi1/0/10 access vlan 99 ↔ eth PC (DHCP)",test:"ipconfig /renew → 172.XX.99.x · ping GW+NVR",det:"PC de gestión con iVMS-4200 + HiTools al puerto 10. Etiqueta GRIS-PC."},
+{id:7,cable:"CABLE-06 ROJO",color:"#ef4444",de:"Proveedor Internet",a:"C9300L Gi1/0/24 (WAN)",puertos:"cable proveedor ↔ Gi1/0/24 routed (no switchport, ip dhcp)",test:"show ip int brief → Gi1/0/24 up/up con IP · ping 8.8.8.8",det:"Puerto 24 del 9300L al proveedor. OJO: el 9300L NO hace NAT; vale si el proveedor entrega IP privada con salida."}];
+/* ===== SYNC GRUPAL (Firebase) + respaldo local =====
+   Pega tu config de Firebase en FIREBASE_CONFIG y los ✔ se comparten
+   entre todos los que abran el link de Netlify. Sin config = modo local. */
+var FIREBASE_CONFIG = null;
+var SYNC=false, dbRef=null;
+var myName=localStorage.getItem('lab7name')||'';
+var st={};
+try{if(!FIREBASE_CONFIG){var _l=JSON.parse(localStorage.getItem('lab7checks')||'{}');for(var _k in _l){st[_k]=_l[_k];}}}catch(e){}
+function isOn(id){var v=st[id];if(v==null||v===false)return false;return (typeof v==='object')?!!v.on:!!v;}
+function whoBy(id){var v=st[id];return (v&&typeof v==='object'&&v.by)?v.by:'';}
+function saveLocal(){try{localStorage.setItem('lab7checks',JSON.stringify(st));}catch(e){}}
+function setCheck(id,on){
+var entry=on?{on:true,by:myName||'anon',at:Date.now()}:null;
+if(on){st[id]=entry;}else{delete st[id];}
+if(SYNC&&dbRef){if(on){dbRef.child(id).set(entry);}else{dbRef.child(id).remove();}render();return;}
+saveLocal();render();
+}
+function initSync(){
+var pill=document.getElementById('syncPill');
+if(!FIREBASE_CONFIG||typeof firebase==='undefined'){if(pill)pill.innerHTML='<span class="badge pend">modo local (solo este equipo)</span>';return;}
+try{
+firebase.initializeApp(FIREBASE_CONFIG);
+dbRef=firebase.database().ref('lab7/checks');
+SYNC=true;
+if(pill)pill.innerHTML='<span class="badge done">sincronizado grupal ✅</span>';
+dbRef.on('value',function(s){st=s.val()||{};render();});
+}catch(e){if(pill)pill.innerHTML='<span class="badge pend">sync falló, modo local</span>';}
+}
+function saveName(){var i=document.getElementById('myName');myName=(i.value||'').trim()||'anon';try{localStorage.setItem('lab7name',myName);}catch(e){}document.getElementById('nameLbl').textContent=myName;}
+function render(){
+var t=document.getElementById('tbl');t.innerHTML='<tr><th>✔</th><th>Cable</th><th>De → A</th><th>Puertos exactos</th><th>Qué verificar</th><th>Estado</th></tr>';
+var n=0;
+CONN.forEach(function(c){
+var on=isOn(c.id);if(on)n++;
+var tr=document.createElement('tr');
+tr.innerHTML='<td><input type="checkbox" class="chk" data-id="'+c.id+'" '+(on?'checked':'')+'></td>'
++'<td><span class="tag" style="background:'+c.color+'22;color:'+c.color+';border:1px solid '+c.color+'">'+c.cable+'</span></td>'
++'<td><b>'+c.de+'</b><br>→ '+c.a+'</td>'
++'<td><small>'+c.puertos+'</small></td>'
++'<td><small>'+c.test+'</small></td>'
++'<td>'+(on?'<span class="badge done">conectado ✔</span>'+(whoBy(c.id)?'<br><small>por '+whoBy(c.id)+'</small>':''):'<span class="badge pend">falta</span>')+'</td>';
+t.appendChild(tr);
+var LKMAP={0:'lk1',1:null,2:'lk2',3:'lk3',4:'lk4',5:'lk5',6:'lk6',7:'lk0'};
+var lk=LKMAP[c.id]?document.getElementById(LKMAP[c.id]):null;
+if(lk)lk.classList.toggle('on',on);
+});
+var p=Math.round(n/CONN.length*100);
+document.getElementById('pb').style.width=p+'%';
+document.getElementById('pc').textContent=n+' de '+CONN.length+' conexiones listas ('+p+'%)';
+document.querySelectorAll('.chk').forEach(function(ch){ch.onchange=function(){setCheck(ch.dataset.id,ch.checked);};});
+}
+var INFO={isp:"<b>INTERNET/ISP</b> — WAN del C9300L con NAT y default route. No exigible para Live View local.",router:"<b>C9300L CORE L3</b> — Vlan30 <span>172.XX.30.1</span> + helper hacia DHCP; Vlan99 <span>172.XX.99.1</span>; <b>ip routing</b> obligatorio. SSH: ssh netadmin@172.XX.99.1. Ver: show ip route.",switch:"<b>C9200L ACCESO</b> — VLAN 30/99. Access: 2=CAM1, 3=NVR, 24=DHCP, 10=PC (+portfast/bpduguard). Trunk Gi1/0/1 → 9300L Gi1/0/1. Mgmt 172.XX.99.2 GW .1. SSH: ssh netadmin@172.XX.99.2.",nvr:"<b>NVR</b> — LAN <span data-ip='nvr'>172.18.30.10</span>, admin/XPTecsup2, HDD 1TB Normal, Overwrite ON.",cam1:"<b>CÁMARA 1</b> — <span data-ip='cam1'>172.18.30.20</span> por switch PoE. Alta en NVR por IP protocolo Hikvision.",dhcp:"<b>DHCP ✅</b> — <span data-ip='dhcp'>172.18.99.10</span> ens33, dnsmasq pools .100-.180, reservas NVR/Cam1.",pc:"<b>PC ADMIN</b> — DHCP VLAN99, iVMS-4200 + HiTools. ipconfig /renew para probar.",cam2:"<b>CÁMARA 2</b> — directo a PoE del NVR (red interna). Se ve como canal del NVR."};
+document.querySelectorAll('svg .node').forEach(function(el){el.addEventListener('click',function(){
+document.querySelectorAll('svg .node').forEach(function(x){x.classList.remove('sel')});el.classList.add('sel');
+document.getElementById('info').innerHTML=INFO[el.dataset.n]||'';});});
+document.querySelectorAll('svg .lk').forEach(function(el){el.addEventListener('click',function(){
+var c=CONN[+el.dataset.c];document.getElementById('info').innerHTML='<b>'+c.cable+'</b> — '+c.de+' → '+c.a+'<br>Puertos: '+c.puertos+'<br>'+c.det;});});
+function copiar(id,btn){
+var t=document.getElementById(id).textContent;
+function ok(){var o=btn.textContent;btn.textContent='✔ Copiado';setTimeout(function(){btn.textContent=o;},1500);}
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok).catch(function(){fallback();});}else{fallback();}
+function fallback(){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){}document.body.removeChild(ta);}
+}
+function buildCfg(v,p){
+var a='172.'+v+'.30.1',b='172.'+v+'.99.1',h='172.'+v+'.99.10',m='172.'+v+'.99.2';
+var c9300='! C9300L CORE L3 - pegar TODO de una vez en consola\n'
++'en\nconfigure terminal\n'
++'hostname C9300L-LAB07\n'
++'ip domain name lab07.local\n'
++'no ip domain lookup\n'
++'vlan 30\n name CCTV\n exit\n'
++'vlan 99\n name GESTION\n exit\n'
++'ip routing\n'
++'interface Vlan30\n description GW_CCTV\n ip address '+a+' 255.255.255.0\n ip helper-address '+h+'\n no shutdown\n exit\n'
++'interface Vlan99\n description GW_GESTION\n ip address '+b+' 255.255.255.0\n no shutdown\n exit\n'
++'interface GigabitEthernet1/0/1\n description UPLINK_SW9200L\n switchport mode trunk\n switchport trunk allowed vlan 30,99\n no shutdown\n exit\n'
++'interface GigabitEthernet1/0/24\n description WAN_PROVEEDOR\n no switchport\n ip address dhcp\n no shutdown\n exit\n'
++'username netadmin privilege 15 secret '+p+'\n'
++'enable secret '+p+'\n'
++'ip ssh version 2\nip ssh time-out 60\nip ssh authentication-retries 3\n'
++'line vty 0 15\n transport input ssh\n login local\n exec-timeout 15 0\n exit\n'
++'line console 0\n login local\n exec-timeout 15 0\n exit\n'
++'service password-encryption\nend\n'
++'! --- sigue en modo enable: si pide reemplazar llave, responde yes ---\n'
++'crypto key generate rsa modulus 2048\nwrite memory';
+var c9200='! C9200L ACCESO - pegar TODO de una vez en consola\n'
++'en\nconfigure terminal\n'
++'hostname C9200L-ACCESO\n'
++'ip domain name lab07.local\n'
++'no ip domain lookup\n'
++'vlan 30\n name CCTV\n exit\n'
++'vlan 99\n name GESTION\n exit\n'
++'interface GigabitEthernet1/0/2\n description CAMARA_1_HIKVISION\n switchport mode access\n switchport access vlan 30\n spanning-tree portfast\n spanning-tree bpduguard enable\n no shutdown\n exit\n'
++'interface GigabitEthernet1/0/3\n description NVR_HIKVISION_LAN\n switchport mode access\n switchport access vlan 30\n spanning-tree portfast\n spanning-tree bpduguard enable\n no shutdown\n exit\n'
++'interface GigabitEthernet1/0/24\n description SERVIDOR_DHCP_ens33\n switchport mode access\n switchport access vlan 99\n spanning-tree portfast\n spanning-tree bpduguard enable\n no shutdown\n exit\n'
++'interface GigabitEthernet1/0/10\n description PC_ADMIN_iVMS\n switchport mode access\n switchport access vlan 99\n spanning-tree portfast\n spanning-tree bpduguard enable\n no shutdown\n exit\n'
++'interface GigabitEthernet1/0/1\n description UPLINK_C9300L\n switchport mode trunk\n switchport trunk allowed vlan 30,99\n no shutdown\n exit\n'
++'interface Vlan99\n description MGMT\n ip address '+m+' 255.255.255.0\n no shutdown\n exit\n'
++'ip default-gateway '+b+'\n'
++'username netadmin privilege 15 secret '+p+'\n'
++'enable secret '+p+'\n'
++'ip ssh version 2\nip ssh time-out 60\nip ssh authentication-retries 3\n'
++'line vty 0 15\n transport input ssh\n login local\n exec-timeout 15 0\n exit\n'
++'line console 0\n login local\n exec-timeout 15 0\n exit\n'
++'service password-encryption\nend\n'
++'! --- sigue en modo enable: si pide reemplazar llave, responde yes ---\n'
++'crypto key generate rsa modulus 2048\nwrite memory';
+document.getElementById('cfg9300').textContent=c9300;
+document.getElementById('cfg9200').textContent=c9200;
+}
+function aplicar(){
+var v=(document.getElementById('oct2')&&document.getElementById('oct2').value)||document.getElementById('oct').value||'18';
+var p=(document.getElementById('pwd2')&&document.getElementById('pwd2').value)||'Lab07*Admin';
+document.getElementById('oct').value=v;document.getElementById('oct2').value=v;
+var m={'r30':'172.'+v+'.30.1','r99':'172.'+v+'.99.1','nvr':'172.'+v+'.30.10','cam1':'172.'+v+'.30.20','dhcp':'172.'+v+'.99.10','net30':'172.'+v+'.30.0/24','net99':'172.'+v+'.99.0/24'};
+document.querySelectorAll('[data-ip]').forEach(function(e){var k=e.getAttribute('data-ip');if(m[k])e.textContent=m[k];});
+buildCfg(v,p);
+document.getElementById('msg').textContent='✔ XX='+v+' aplicado';
+document.getElementById('msg2').textContent='✔ configs generadas XX='+v;
+}
+function resetChecks(){if(!confirm('¿Desmarcar todo? (en modo grupal se borra PARA TODO EL GRUPO)'))return;if(SYNC&&dbRef){dbRef.remove();}st={};saveLocal();render();}
+render();aplicar();initSync();
+if(myName){document.getElementById('myName').value=myName;document.getElementById('nameLbl').textContent=myName;}
+</script>
+</body>
+</html>

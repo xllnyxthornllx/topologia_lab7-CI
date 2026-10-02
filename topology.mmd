@@ -1,0 +1,51 @@
+graph TB
+    subgraph Internet[Internet]
+        ISP[ISP / WAN]
+    end
+
+    subgraph Router[Router - Gateways]
+        G0_0_30[G0/0.30<br/>172.18.30.1/24<br/>VLAN 30 CCTV]
+        G0_0_99[G0/0.99<br/>172.18.99.1/24<br/>VLAN 99 GESTION]
+        WAN[WAN Interface<br/>NAT + Default Route]
+        HELPER[ip helper-address<br/>172.18.99.10<br/>en G0/0.30]
+    end
+
+    subgraph Switch[Switch Administrable]
+        Gi1_0_2[Gi1/0/2<br/>Access VLAN 30<br/>CAMARA 1]
+        Gi1_0_3[Gi1/0/3<br/>Access VLAN 30<br/>NVR LAN]
+        Gi1_0_10[Gi1/0/10<br/>Access VLAN 99<br/>SERVIDOR DHCP]
+        Gi1_0_11[Gi1/0/11<br/>Access VLAN 99<br/>PC ADMIN]
+        Gi1_0_24[Gi1/0/24<br/>Trunk<br/>VLAN 30,99]
+    end
+
+    subgraph VLAN30[VLAN 30 - CCTV - 172.18.30.0/24]
+        NVR[NVR Hikvision<br/>LAN: 172.18.30.10/24<br/>GW: 172.18.30.1<br/>HDD 1TB]
+        CAM1[Camara 1 Hikvision<br/>172.18.30.20/24<br/>GW: 172.18.30.1<br/>via Switch PoE]
+    end
+
+    subgraph VLAN99[VLAN 99 - GESTION - 172.18.99.0/24]
+        DHCP[Servidor DHCP<br/>172.18.99.10/24<br/>GW: 172.18.99.1<br/>Pools .100-.180]
+        PCADMIN[PC Administracion<br/>DHCP Client<br/>iVMS-4200 + HiTools]
+    end
+
+    subgraph NVRPoE[Red PoE Interna del NVR]
+        CAM2[Camara 2 Hikvision<br/>IP asignada por NVR<br/>PoE Directo<br/>Canal NVR]
+    end
+
+    ISP --- WAN
+    WAN --- G0_0_30
+    WAN --- G0_0_99
+    G0_0_30 --- Gi1_0_24
+    G0_0_99 --- Gi1_0_24
+    HELPER -.-> DHCP
+    Gi1_0_24 --- Gi1_0_2
+    Gi1_0_24 --- Gi1_0_3
+    Gi1_0_24 --- Gi1_0_10
+    Gi1_0_24 --- Gi1_0_11
+    Gi1_0_2 --- CAM1
+    Gi1_0_3 --- NVR
+    Gi1_0_10 --- DHCP
+    Gi1_0_11 --- PCADMIN
+    NVR --- CAM2
+    PCADMIN -.->|iVMS-4200 / HiTools<br/>gestiona| NVR
+    PCADMIN -.->|gestion directa| CAM1

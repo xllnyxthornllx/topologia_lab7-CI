@@ -1,0 +1,118 @@
+! ============================================================
+! C9200L - SWITCH ACCESO L2 - Lab 07
+! Equipo: Catalyst 9200L (puertos de camaras, NVR, DHCP, PC)
+! MGMT del switch: 172.18.99.2/24, GW 172.18.99.1 (el C9300L)
+! XX por defecto = 18. Reemplaza si tu lab usa otro XX.
+! Adapta Gi1/0/X a tus puertos reales
+! ============================================================
+en
+configure terminal
+
+hostname C9200L-ACCESO
+ip domain name lab07.local
+no ip domain lookup
+
+! --- VLANs (deben existir tambien aqui) ---
+vlan 30
+ name CCTV
+ exit
+vlan 99
+ name GESTION
+ exit
+
+! --- Puertos acceso: camara + NVR en VLAN 30 ---
+interface GigabitEthernet1/0/2
+ description CAMARA_1_HIKVISION
+ switchport mode access
+ switchport access vlan 30
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+ exit
+
+interface GigabitEthernet1/0/3
+ description NVR_HIKVISION_LAN
+ switchport mode access
+ switchport access vlan 30
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+ exit
+
+! --- Puerto 24: servidor DHCP (VLAN 99) ---
+interface GigabitEthernet1/0/24
+ description SERVIDOR_DHCP_ens33
+ switchport mode access
+ switchport access vlan 99
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+ exit
+
+! --- Puerto 10: PC admin (VLAN 99) ---
+interface GigabitEthernet1/0/10
+ description PC_ADMIN_iVMS
+ switchport mode access
+ switchport access vlan 99
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ no shutdown
+ exit
+
+! --- Uplink hacia C9300L (troncal, puerto 1 con puerto 1) ---
+interface GigabitEthernet1/0/1
+ description UPLINK_C9300L
+ switchport mode trunk
+ switchport trunk allowed vlan 30,99
+ no shutdown
+ exit
+
+! --- IP de gestion del switch (VLAN 99) ---
+interface Vlan99
+ description MGMT
+ ip address 172.18.99.2 255.255.255.0
+ no shutdown
+ exit
+! Como es L2, la salida la da el gateway (el C9300L):
+ip default-gateway 172.18.99.1
+
+! ============================================================
+! SSH - acceso remoto
+! Usuario: netadmin / Clave: LA MISMA que pongas en el 9300L
+! ============================================================
+username netadmin privilege 15 secret Lab07*Admin
+enable secret Lab07*Admin
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+line vty 0 15
+ transport input ssh
+ login local
+ exec-timeout 15 0
+ exit
+line console 0
+ login local
+ exec-timeout 15 0
+ exit
+service password-encryption
+
+end
+! --- OJO: este comando va FUERA de configure (modo enable) ---
+! Si pide reemplazar llave existente, responde yes:
+crypto key generate rsa modulus 2048
+write memory
+
+! ===== VERIFICACION =====
+! show vlan brief
+! show interfaces status | include 1/0/
+! show interfaces trunk
+! show ip interface brief | include Vlan99
+! ping 172.18.99.1        (debe responder el C9300L)
+! ping 172.18.99.10       (tu VM DHCP cuando este pinchada)
+! show ssh
+! Desde PC Admin: ssh netadmin@172.18.99.2
+
+! ===== SI ALGO FALLA =====
+! 'show interfaces Gi1/0/X status' -> debe decir connected, a-full, vlan 30 o 99
+! Si un puerto access quedo en vlan 1, repite switchport access vlan 30/99
+! Si el trunk no levanta, revisa que ambos extremos sean mode trunk y mismas vlans
