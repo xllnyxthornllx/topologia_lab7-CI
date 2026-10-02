@@ -66,10 +66,9 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin-top:10px}
 <span id="msg" style="color:var(--ok);font-size:13px"></span>
 </div>
 <div class="ctrl">
-<label>Tu nombre (el grupo verá quién marcó cada ✔):</label>
-<input id="myName" type="text" placeholder="ej. Alvarez" style="width:140px;font-size:14px">
-<button onclick="saveName()">OK</button>
+<label>El grupo verá quién marcó cada ✔.</label>
 <span style="font-size:13px">Eres: <b id="nameLbl">—</b></span>
+<button onclick="changeName()">Cambiar</button>
 </div>
 </div>
 
@@ -196,9 +195,9 @@ Playback → clip por movimiento</pre>
 </div>
 <footer>Checks se guardan en este navegador · XX editable · imprime esta página para llevarla al lab</footer>
 </div>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 var CONN=[
 {id:0,cable:"CABLE-00 UPLINK",color:"#818cf8",de:"C9300L Gi1/0/1 (trunk)",a:"C9200L Gi1/0/1 (trunk 30,99)",puertos:"Gi1/0/1 ↔ Gi1/0/1 · allowed vlan 30,99 (puerto 1 con 1)",test:"show interfaces trunk en ambos · ping entre gateways",det:"Cable troncal entre Catalysts (puerto 1 a puerto 1). Sin esto no hay inter-VLAN ni DHCP relay. Ambos extremos mode trunk."},
 {id:1,cable:"— (lógico)",color:"#38bdf8",de:"C9300L SVIs",a:"Vlan30 .1 y Vlan99 .1 + ip routing",puertos:"Vlan30 ↔ VLAN30 · Vlan99 ↔ VLAN99 · helper .10 en Vlan30",test:"ping 172.XX.30.1 y 172.XX.99.1 · show ip route",det:"En el 9300L NO son subinterfaces: son SVI + ip routing + ip helper-address 172.XX.99.10 en Vlan30."},
@@ -208,42 +207,56 @@ var CONN=[
 {id:5,cable:"CABLE-04 AZUL",color:"#38bdf8",de:"C9200L Gi1/0/24 (access V99)",a:"Servidor DHCP (ens33)",puertos:"Gi1/0/24 access vlan 99 ↔ ens33 (172.XX.99.10)",test:"./verificar-lab.sh · ss :67 · leases",det:"Tu VM nyxthorn al puerto 24 del 9200L. Al pinchar corre sudo ./aplicar-lab.sh. Etiqueta AZUL-DHCP."},
 {id:6,cable:"CABLE-05 GRIS",color:"#a1a1aa",de:"C9200L Gi1/0/10 (access V99)",a:"PC Admin",puertos:"Gi1/0/10 access vlan 99 ↔ eth PC (DHCP)",test:"ipconfig /renew → 172.XX.99.x · ping GW+NVR",det:"PC de gestión con iVMS-4200 + HiTools al puerto 10. Etiqueta GRIS-PC."},
 {id:7,cable:"CABLE-06 ROJO",color:"#ef4444",de:"Proveedor Internet",a:"C9300L Gi1/0/24 (WAN)",puertos:"cable proveedor ↔ Gi1/0/24 routed (no switchport, ip dhcp)",test:"show ip int brief → Gi1/0/24 up/up con IP · ping 8.8.8.8",det:"Puerto 24 del 9300L al proveedor. OJO: el 9300L NO hace NAT; vale si el proveedor entrega IP privada con salida."}];
-/* ===== SYNC GRUPAL (Firebase) + respaldo local =====
-   Pega tu config de Firebase en FIREBASE_CONFIG y los ✔ se comparten
-   entre todos los que abran el link de Netlify. Sin config = modo local. */
-var FIREBASE_CONFIG = null;
-var SYNC=false, dbRef=null;
-var myName=localStorage.getItem('lab7name')||'';
+/* ===== SYNC GRUPAL: Firebase Realtime Database (tiempo real) =====
+   checks/check-XX -> {by, at}. Sin conexión/errores -> localStorage. */
+const firebaseConfig = {
+  apiKey: "AIzaSyBm7Z1MIHgoWbSkt3alVgXQAjG1GTd-x4g",
+  authDomain: "topologia-lab7-ci.firebaseapp.com",
+  databaseURL: "https://topologia-lab7-ci-default-rtdb.firebaseio.com",
+  projectId: "topologia-lab7-ci",
+  storageBucket: "topologia-lab7-ci.firebasestorage.app",
+  messagingSenderId: "179090947934",
+  appId: "1:179090947934:web:b33f32f6ddaee6191e99cf"
+};
+var SYNC=false, db=null;
+var myName='';
+try{myName=localStorage.getItem('lab7_user')||'';}catch(e){}
+if(!myName){try{myName=(prompt('Tu nombre (el grupo verá quién marcó cada ✔):','')||'').trim()||'anon';localStorage.setItem('lab7_user',myName);}catch(e){if(!myName)myName='anon';}}
 var st={};
-try{if(!FIREBASE_CONFIG){var _l=JSON.parse(localStorage.getItem('lab7checks')||'{}');for(var _k in _l){st[_k]=_l[_k];}}}catch(e){}
-function isOn(id){var v=st[id];if(v==null||v===false)return false;return (typeof v==='object')?!!v.on:!!v;}
-function whoBy(id){var v=st[id];return (v&&typeof v==='object'&&v.by)?v.by:'';}
+try{var _l=JSON.parse(localStorage.getItem('lab7checks')||'{}');for(var _k in _l){var _nk=/^\d+$/.test(_k)?cid(_k):_k;st[_nk]=_l[_k];}}catch(e){}
+function cid(id){return 'check-'+('0'+id).slice(-2);}
+function isOn(id){var v=st[cid(id)];if(v==null||v===false)return false;return (typeof v==='object')?(v.on!==false):!!v;}
+function whoBy(id){var v=st[cid(id)];return (v&&typeof v==='object'&&v.by)?v.by:'';}
 function saveLocal(){try{localStorage.setItem('lab7checks',JSON.stringify(st));}catch(e){}}
 function setCheck(id,on){
-var entry=on?{on:true,by:myName||'anon',at:Date.now()}:null;
-if(on){st[id]=entry;}else{delete st[id];}
-if(SYNC&&dbRef){if(on){dbRef.child(id).set(entry);}else{dbRef.child(id).remove();}render();return;}
+var key=cid(id);
+if(SYNC&&db){
+if(on){set(ref(db,'checks/'+key),{by:myName||'anon',at:Date.now()}).catch(function(){SYNC=false;pillLocal();});}
+else{remove(ref(db,'checks/'+key)).catch(function(){});}
+return;
+}
+if(on){st[key]={on:true,by:myName||'anon',at:Date.now()};}else{delete st[key];}
 saveLocal();render();
 }
+function pillLocal(){var pill=document.getElementById('syncPill');if(pill)pill.innerHTML='<span class="badge pend">modo local (solo este equipo)</span>';}
 function initSync(){
 var pill=document.getElementById('syncPill');
-if(!FIREBASE_CONFIG||typeof firebase==='undefined'){if(pill)pill.innerHTML='<span class="badge pend">modo local (solo este equipo)</span>';return;}
 try{
-firebase.initializeApp(FIREBASE_CONFIG);
-dbRef=firebase.database().ref('lab7/checks');
+var app=initializeApp(firebaseConfig);
+db=getDatabase(app);
 SYNC=true;
 if(pill)pill.innerHTML='<span class="badge done">sincronizado grupal ✅</span>';
-dbRef.on('value',function(s){st=s.val()||{};render();});
-}catch(e){if(pill)pill.innerHTML='<span class="badge pend">sync falló, modo local</span>';}
+onValue(ref(db,'checks'),function(s){st=s.val()||{};saveLocal();render();});
+}catch(e){SYNC=false;db=null;pillLocal();}
 }
-function saveName(){var i=document.getElementById('myName');myName=(i.value||'').trim()||'anon';try{localStorage.setItem('lab7name',myName);}catch(e){}document.getElementById('nameLbl').textContent=myName;}
+function changeName(){try{var n=(prompt('Tu nombre:',myName||'')||'').trim();if(n){myName=n;localStorage.setItem('lab7_user',myName);document.getElementById('nameLbl').textContent=myName;}}catch(e){}}
 function render(){
 var t=document.getElementById('tbl');t.innerHTML='<tr><th>✔</th><th>Cable</th><th>De → A</th><th>Puertos exactos</th><th>Qué verificar</th><th>Estado</th></tr>';
 var n=0;
 CONN.forEach(function(c){
 var on=isOn(c.id);if(on)n++;
 var tr=document.createElement('tr');
-tr.innerHTML='<td><input type="checkbox" class="chk" data-id="'+c.id+'" '+(on?'checked':'')+'></td>'
+tr.innerHTML='<td><input type="checkbox" class="chk" id="'+cid(c.id)+'" data-id="'+c.id+'" '+(on?'checked':'')+'></td>'
 +'<td><span class="tag" style="background:'+c.color+'22;color:'+c.color+';border:1px solid '+c.color+'">'+c.cable+'</span></td>'
 +'<td><b>'+c.de+'</b><br>→ '+c.a+'</td>'
 +'<td><small>'+c.puertos+'</small></td>'
@@ -330,7 +343,8 @@ document.getElementById('msg2').textContent='✔ configs generadas XX='+v;
 }
 function resetChecks(){if(!confirm('¿Desmarcar todo? (en modo grupal se borra PARA TODO EL GRUPO)'))return;if(SYNC&&dbRef){dbRef.remove();}st={};saveLocal();render();}
 render();aplicar();initSync();
-if(myName){document.getElementById('myName').value=myName;document.getElementById('nameLbl').textContent=myName;}
+document.getElementById('nameLbl').textContent=myName||'—';
+window.aplicar=aplicar;window.resetChecks=resetChecks;window.copiar=copiar;window.changeName=changeName;
 </script>
 </body>
 </html>
